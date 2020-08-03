@@ -1,0 +1,18 @@
+*.*~
+
+# Clojure
+.nrepl-port
+.cpcache/
+.lein-repl-history
+
+# Eclipse
+.project
+.classpath
+.settings/
+build/
+bin/
+target/
+*.svg
+*.pdf
+*.xlsx
+*.spec
