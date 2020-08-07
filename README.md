@@ -10,8 +10,7 @@ example of using some of the Clojure libraries I've written.
 
 The Annuity application uses these libraries:
 * [clj.base](https://github.com/lsolbach/CljBase/tree/master/clj.base)
-* [clj.java](https://github.com/lsolbach/CljBase/tree/master/clj.java)
-* [math.base](https://github.com/lsolbach/CljMath)
+* [math.core](https://github.com/lsolbach/CljMath)
 * [math.financial](https://github.com/lsolbach/CljMath)
 * [cmp.batik](https://github.com/lsolbach/CljComponents/tree/master/cmp.batik)
 * [cmp.fop](https://github.com/lsolbach/CljComponents/tree/master/cmp.fop)

@@ -9,9 +9,8 @@
 ;;
 
 (ns org.soulspace.annuity.domain.annuity
-  (:use
-    [org.soulspace.clj.math.java-math :only (floor ceil pow)]
-    [org.soulspace.clj.math.finance]))
+  (:require [org.soulspace.math.core :as m]
+            [org.soulspace.math.interest :as mi]))
 
 ;;
 ;; Domain Logic
@@ -67,12 +66,12 @@
 (defn financial-rounder
   "Returns a finacial rounding function."
   [value]
-  ((partial round-financial 2) value))
+  ((partial mi/round-financial 2) value))
 
 (defn years
   "Calculates the number of years it takes to pay back the credit."
   [periods payments-per-year]
-  (ceil (/ periods payments-per-year)))
+  (m/ceil (/ periods payments-per-year)))
 
 (defn calc-cumulated-cost
   "Calculates the cumulated cost for the given periods."
@@ -100,8 +99,8 @@
   (let [pp (:payment-period spec)
         py (nth payments-per-year pp)
         k-0 (:credit spec)
-        q (pow (+ 1 (percent (:p-interest spec))) (/ 1 py))
-        a (max (:rate spec) (* (- q (pow 0.995 (/ 1 py))) k-0)) ; minimum redemption 0.5% 
+        q (m/pow (+ 1 (mi/percent (:p-interest spec))) (/ 1 py))
+        a (max (:rate spec) (* (- q (m/pow 0.995 (/ 1 py))) k-0)) ; minimum redemption 0.5% 
         i (:p-interest spec)
         i-t (:p-redemption spec)
         n (* (:term spec) py)
@@ -109,9 +108,9 @@
     (if (and (> k-0 0) (> q 1))
       (cond
         (> a 0) ; calculate with fixed annuity
-        (new-spec k-0 i a i-t (ceil (/ (annuity-term k-0 a q) py)) pp extra)
+        (new-spec k-0 i a i-t (m/ceil (/ (mi/annuity-term k-0 a q) py)) pp extra)
         (> n 0) ; calculate with fixed term
-        (new-spec k-0 i (annuity-rate k-0 q n) i-t (ceil (/ n py)) pp extra)
+        (new-spec k-0 i (mi/annuity-rate k-0 q n) i-t (m/ceil (/ n py)) pp extra)
         ; (> i-t 0) () ; ?
         :default spec)
       spec)))
@@ -121,7 +120,7 @@
   [spec]
   (let [py (nth payments-per-year (:payment-period spec))
         k-0 (:credit spec)
-        q (pow (+ 1 (percent (:p-interest spec))) (/ 1 py))
+        q (m/pow (+ 1 (mi/percent (:p-interest spec))) (/ 1 py))
         a (:rate spec)
         i (- q 1)
         extra (:extra-redemptions spec)]
@@ -136,7 +135,7 @@
             a-act (min (+ k-m i-m) a-m)]
         (if (> k-m 0)
           (recur (inc m) (conj periods (new-period
-                                         (inc m) (int (+ (floor (/ m py)) 1))
+                                         (inc m) (int (+ (m/floor (/ m py)) 1))
                                          k-m a-act i-m (- a-act i-m)
                                          (+ i-m (get prev-period :c-interest 0))
                                          (+ a-act (get prev-period :c-cost 0)))))

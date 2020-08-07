@@ -13,7 +13,7 @@
   (:use [org.soulspace.clj.java awt]
         [org.soulspace.clj.java.awt event]
         [org.soulspace.clj.java.swing constants swinglib]
-        [org.soulspace.math finance]
+        [org.soulspace.math.interest]
         [org.soulspace.cmp.jfreechart swing]
         [org.soulspace.annuity.domain annuity]
         [org.soulspace.annuity.application annuity i18n formats charts pdf-report excel-report])
