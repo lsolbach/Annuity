@@ -12,6 +12,13 @@
 build/
 bin/
 target/
+
+# VS Code / Calva
+.clj-kondo
+.lsp
+output.calva-repl
+
+# Application
 *.svg
 *.pdf
 *.xlsx
