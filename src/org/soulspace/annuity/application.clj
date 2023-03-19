@@ -18,3 +18,6 @@
 
 (defn -main [& args]
   (ui/start))
+
+(comment 
+  (-main))
