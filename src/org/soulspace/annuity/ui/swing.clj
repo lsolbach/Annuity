@@ -1,12 +1,14 @@
-;;
-;;   Copyright (c) Ludger Solbach. All rights reserved.
-;;   The use and distribution terms for this software are covered by the
-;;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
-;;   which can be found in the file license.txt at the root of this distribution.
-;;   By using this software in any fashion, you are agreeing to be bound by
-;;   the terms of this license.
-;;   You must not remove this notice, or any other, from this software.
-;;
+;;;;
+;;;;   Copyright (c) Ludger Solbach. All rights reserved.
+;;;;
+;;;;   The use and distribution terms for this software are covered by the
+;;;;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
+;;;;   which can be found in the file license.txt at the root of this distribution.
+;;;;   By using this software in any fashion, you are agreeing to be bound by
+;;;;   the terms of this license.
+;;;;
+;;;;   You must not remove this notice, or any other, from this software.
+;;;;
 
 (ns org.soulspace.annuity.ui.swing
   (:require [clojure.tools.swing-utils :refer [do-swing-and-wait]]
@@ -21,9 +23,9 @@
         [org.soulspace.annuity.application pdf-report excel-report])
   (:import [javax.swing Action BorderFactory JFrame]))
 
-;;
-;; Swing UI of the annuity application with clj.swing
-;;
+;;;;
+;;;; Swing UI of the annuity application with clj.swing
+;;;;
 
 (declare ui-frame)
 
@@ -49,6 +51,10 @@
      {:label (app/i18n "label.c-cost") :key :c-cost :edit false :converter domain/financial-rounder}]
     domain/periods))
 
+;;;
+;;; Spec I/O
+;;;
+
 (defn open
   "Loads the specification."
   [filename]
@@ -61,9 +67,9 @@
   (println (str "Saving " filename))
   (app/save-spec @domain/spec))
 
-;;
-;; Dialogs
-;;
+;;;
+;;; Dialogs
+;;;
 
 (let [field-period (integer-field {:columns 10})
       field-amount (formatted-text-field app/money-fmt {:columns 10 :value 0.0})
@@ -92,9 +98,9 @@
       (.pack)
       (.setVisible true))))
 
-;;
-;; Panels
-;;
+;;;
+;;; Panels
+;;;
 
 (defn period-panel
   "Creates the period panel."
@@ -244,9 +250,9 @@
     (add-watch domain/periods :summary-update (fn [_ _ _ _] (update-summary)))
   p))
 
-;;
-;; Main Menu
-;;
+;;;
+;;; Main Menu
+;;;
 
 (defn main-menu
   "Creates the main menu."
@@ -310,9 +316,9 @@
                                                  :accelerator (key-stroke \A :ctrl :alt)
                                                  :mnemonic nil})})])]))
 
-;;
-;; Main UI Frame
-;;
+;;;
+;;; Main UI Frame
+;;;
 
 (defn main-frame
   "Creates the main frame of the user interface."
@@ -325,6 +331,10 @@
                     [[(input-panel) "grow"]])
              (panel {:layout (mig-layout {:layoutConstraints "wrap 1, insets 10, fill, top"})}
                     [[(result-panel) "grow"]])])]))
+
+;;;
+;;; UI initialization
+;;;
 
 (defn init-ui
   "Initializes the user interface."
