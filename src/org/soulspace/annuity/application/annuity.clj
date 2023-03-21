@@ -31,10 +31,10 @@
 ;;
 ;;
 ;;
-(def redemption-periods [(i18n/i18n "label.redemptionPeriod.annually")
-                         (i18n/i18n "label.redemptionPeriod.semiannually")
-                         (i18n/i18n "label.redemptionPeriod.quarterly")
-                         (i18n/i18n "label.redemptionPeriod.monthly")])
+(def redemption-periods [(i18n "label.redemptionPeriod.annually")
+                         (i18n "label.redemptionPeriod.semiannually")
+                         (i18n "label.redemptionPeriod.quarterly")
+                         (i18n "label.redemptionPeriod.monthly")])
 
 
 ;;;
@@ -95,20 +95,20 @@
 ;;
 
 (defn term-chart-data [periods]
-  (jfdata/xy-series-collection [(jfdata/xy-series (i18n/i18n "label.rate") (map period-rate periods))
-                                (jfdata/xy-series (i18n/i18n "label.interest") (map period-interest periods))
-                                (jfdata/xy-series (i18n/i18n "label.redemption") (map period-redemption periods))]))
+  (jfdata/xy-series-collection [(jfdata/xy-series (i18n "label.rate") (map period-rate periods))
+                                (jfdata/xy-series (i18n "label.interest") (map period-interest periods))
+                                (jfdata/xy-series (i18n "label.redemption") (map period-redemption periods))]))
 
 (defn term-chart-update [data periods]
   (.removeAllSeries data)
-  (.addSeries data (jfdata/xy-series (i18n/i18n "label.rate") (map period-rate periods)))
-  (.addSeries data (jfdata/xy-series (i18n/i18n "label.interest") (map period-interest periods)))
-  (.addSeries data (jfdata/xy-series (i18n/i18n "label.redemption") (map period-redemption periods))))
+  (.addSeries data (jfdata/xy-series (i18n "label.rate") (map period-rate periods)))
+  (.addSeries data (jfdata/xy-series (i18n "label.interest") (map period-interest periods)))
+  (.addSeries data (jfdata/xy-series (i18n "label.redemption") (map period-redemption periods))))
 
 (defn term-chart []
   (let [data (term-chart-data @domain/periods)
-        chart (jfchart/xy-line-chart (i18n/i18n "label.term.chart")
-                                     (i18n/i18n "label.period") (i18n/i18n "label.currency") data :vertical)]
+        chart (jfchart/xy-line-chart (i18n "label.term.chart")
+                                     (i18n "label.period") (i18n "label.currency") data :vertical)]
 ;    (set-renderer-properties chart {:shapesVisible true
 ;                                    :shapesFilled true})
     (defn get-term-chart [] chart)
@@ -120,20 +120,20 @@
 ;;
 
 (defn cumulated-chart-data [periods]
-  (jfdata/xy-series-collection [(jfdata/xy-series (i18n/i18n "label.amountRemaining") (map period-amount periods))
-                                (jfdata/xy-series (i18n/i18n "label.c-interest") (map period-c-interest periods))
-                                (jfdata/xy-series (i18n/i18n "label.c-cost") (map period-c-cost periods))]))
+  (jfdata/xy-series-collection [(jfdata/xy-series (i18n "label.amountRemaining") (map period-amount periods))
+                                (jfdata/xy-series (i18n "label.c-interest") (map period-c-interest periods))
+                                (jfdata/xy-series (i18n "label.c-cost") (map period-c-cost periods))]))
 
 (defn cumulated-chart-update [data periods]
   (.removeAllSeries data)
-  (.addSeries data (jfdata/xy-series (i18n/i18n "label.amountRemaining") (map period-amount periods)))
-  (.addSeries data (jfdata/xy-series (i18n/i18n "label.c-interest") (map period-c-interest periods)))
-  (.addSeries data (jfdata/xy-series (i18n/i18n "label.c-cost") (map period-c-cost periods))))
+  (.addSeries data (jfdata/xy-series (i18n "label.amountRemaining") (map period-amount periods)))
+  (.addSeries data (jfdata/xy-series (i18n "label.c-interest") (map period-c-interest periods)))
+  (.addSeries data (jfdata/xy-series (i18n "label.c-cost") (map period-c-cost periods))))
 
 (defn cumulated-chart []
   (let [data (cumulated-chart-data @domain/periods)
-        chart (jfchart/xy-line-chart (i18n/i18n "label.cumulated.chart")
-                                     (i18n/i18n "label.period") (i18n/i18n "label.currency") data :vertical)]
+        chart (jfchart/xy-line-chart (i18n "label.cumulated.chart")
+                                     (i18n "label.period") (i18n "label.currency") data :vertical)]
 ;    (set-renderer-properties chart {:shapesVisible true
 ;                                    :shapesFilled true})
     (defn get-cumulated-chart [] chart)
@@ -148,13 +148,13 @@
   (let [c-interest (domain/calc-cumulated-interest periods)
         c-redemption (domain/calc-cumulated-redemption periods)]
     (.clear data)
-    (.setValue data (i18n/i18n "label.c-redemption") (domain/financial-rounder c-redemption))
-    (.setValue data (i18n/i18n "label.c-interest") (domain/financial-rounder c-interest))))
+    (.setValue data (i18n "label.c-redemption") (domain/financial-rounder c-redemption))
+    (.setValue data (i18n "label.c-interest") (domain/financial-rounder c-interest))))
 
 (defn redemption-interest-chart []
-  (let [data (jfdata/pie-dataset [[(i18n/i18n "label.c-redemption") (domain/financial-rounder (domain/calc-cumulated-redemption @domain/periods))]
-                                  [(i18n/i18n "label.c-interest") (domain/financial-rounder (domain/calc-cumulated-interest @domain/periods))]])
-        chart (jfchart/pie-chart (i18n/i18n "label.redemptionInterest.chart") data true true true)]
+  (let [data (jfdata/pie-dataset [[(i18n "label.c-redemption") (domain/financial-rounder (domain/calc-cumulated-redemption @domain/periods))]
+                                  [(i18n "label.c-interest") (domain/financial-rounder (domain/calc-cumulated-interest @domain/periods))]])
+        chart (jfchart/pie-chart (i18n "label.redemptionInterest.chart") data true true true)]
     (defn get-redemption-interest-chart [] chart)
     (add-watch domain/periods :redemption-interest-chart-update (fn [_ _ _ new-periods] (redemption-interest-chart-update data new-periods)))
     chart))
