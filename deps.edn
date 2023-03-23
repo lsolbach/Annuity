@@ -1,9 +1,9 @@
 {:deps {org.clojure/clojure {:mvn/version "1.10.1"}
         org.clojure/data.csv {:mvn/version "0.1.4"}
-        org.soulspace.clj/clj.base {:mvn/version "0.8.3"}
-        org.soulspace.clj/clj.java {:mvn/version "0.8.0"}
-        org.soulspace.clj/clj.swing {:mvn/version "0.7.3"}
-        org.soulspace.clj/clj.app {:mvn/version "0.7.0"}
+;        org.soulspace.clj/clj.base {:mvn/version "0.8.3"}
+        org.soulspace.clj/clj.java {:mvn/version "0.9.0"}
+        org.soulspace.clj/clj.swing {:mvn/version "0.8.0-SNAPSHOT"}
+;        org.soulspace.clj/clj.app {:mvn/version "0.7.0"}
         org.soulspace.clj/cmp.batik {:mvn/version "0.2.1-SNAPSHOT"}
         org.soulspace.clj/cmp.fop {:mvn/version "0.3.1-SNAPSHOT"}
         org.soulspace.clj/cmp.jfreechart {:mvn/version "0.4.0"}

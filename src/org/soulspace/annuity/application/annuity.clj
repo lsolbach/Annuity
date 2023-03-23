@@ -13,7 +13,7 @@
 (ns org.soulspace.annuity.application.annuity
   (:require [clojure.java.io :as io]
             [org.soulspace.clj.java.text :as text]
-            [org.soulspace.clj.application.i18n :as i18n]
+            [org.soulspace.clj.java.i18n :as i18n]
             [org.soulspace.cmp.svg.graphics2d :as g2d]
             [org.soulspace.cmp.jfreechart.chart :as jfchart]
             [org.soulspace.cmp.jfreechart.dataset :as jfdata]
