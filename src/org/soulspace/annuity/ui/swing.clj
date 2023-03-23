@@ -105,7 +105,7 @@
   "Creates the period panel."
   []
   (let [table-model (period-table-model)
-        money-cell-renderer (swing/table-cell-renderer (fn [v] (.format app/money-fmt v)) {:horizontalAlignment (swc/swing-keys :right)})
+        money-cell-renderer (swing/table-cell-renderer (fn [v] (.format app/money-fmt v)) {:horizontalAlignment (swing/swing-keys :right)})
         table (swing/table {:model table-model
                       :gridColor java.awt.Color/DARK_GRAY})
         b-print (swing/button {:action (swing/action (fn [_] (.print table)))
@@ -130,15 +130,15 @@
   "Creates the input panel."
   []
   (let [f-credit (swing/formatted-text-field app/money-fmt {:value (:credit @domain/spec)
-                                                  :horizontalAlignment (swc/swing-keys :right)})
+                                                  :horizontalAlignment (swing/swing-keys :right)})
         f-rate (swing/formatted-text-field app/money-fmt {:value (:rate @domain/spec)
-                                                :horizontalAlignment (swc/swing-keys :right)})
+                                                :horizontalAlignment (swing/swing-keys :right)})
         f-p-interest (swing/formatted-text-field app/money-fmt {:value (:p-interest @domain/spec)
-                                                      :horizontalAlignment (swc/swing-keys :right)})
+                                                      :horizontalAlignment (swing/swing-keys :right)})
         f-p-redemption (swing/formatted-text-field app/money-fmt {:value (:p-redemption @domain/spec)
-                                                        :horizontalAlignment (swc/swing-keys :right)})
+                                                        :horizontalAlignment (swing/swing-keys :right)})
         f-term (swing/integer-field {:value (:term @domain/spec)
-                               :horizontalAlignment (swc/swing-keys :right)})
+                               :horizontalAlignment (swing/swing-keys :right)})
         f-rperiod (swing/combo-box {} [(app/i18n "label.redemptionPeriod.annually")
                                  (app/i18n "label.redemptionPeriod.semiannually")
                                  (app/i18n "label.redemptionPeriod.quarterly")
@@ -152,7 +152,7 @@
         b-clear-redemption (swing/button {:action (swing/action (fn [_] (dosync (ref-set domain/redemptions []))))
                                     :text (app/i18n "button.clear")})
         table-model (redemption-table-model)
-        money-cell-renderer (swing/table-cell-renderer (fn [v] (.format app/money-fmt v)) {:horizontalAlignment (swc/swing-keys :right)})
+        money-cell-renderer (swing/table-cell-renderer (fn [v] (.format app/money-fmt v)) {:horizontalAlignment (swing/swing-keys :right)})
         table (swing/table {:model table-model
                       :gridColor java.awt.Color/DARK_GRAY})]
 
@@ -214,16 +214,16 @@
   []
   (let [f-years (swing/integer-field {:value (domain/years (count @domain/periods) (nth domain/payments-per-year (:payment-period @domain/spec)))
                                 :editable false
-                                :horizontalAlignment (swc/swing-keys :right)})
+                                :horizontalAlignment (swing/swing-keys :right)})
         f-terms (swing/integer-field {:value (count @domain/periods)
                                 :editable false
-                                :horizontalAlignment (swc/swing-keys :right)})
+                                :horizontalAlignment (swing/swing-keys :right)})
         f-c-interest (swing/formatted-text-field app/money-fmt {:value (domain/financial-rounder (domain/calc-cumulated-interest @domain/periods))
                                                       :editable false
-                                                      :horizontalAlignment (swc/swing-keys :right)})
+                                                      :horizontalAlignment (swing/swing-keys :right)})
         f-c-cost (swing/formatted-text-field app/money-fmt {:value (domain/financial-rounder (domain/calc-cumulated-cost @domain/periods))
                                                   :editable false
-                                                  :horizontalAlignment (swc/swing-keys :right)})
+                                                  :horizontalAlignment (swing/swing-keys :right)})
         p (swing/panel {:layout (swing/mig-layout {:layoutConstraints "wrap 4, insets 10, fill"
                                :columnConstraints "[left|grow|left|grow]"})}
            [[(swing/label {:text (app/i18n "label.summary") :font heading-font}) "left, span, wrap 10"]
