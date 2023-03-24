@@ -13,9 +13,9 @@
 (ns org.soulspace.annuity.ui.swing
   (:require [clojure.tools.swing-utils :refer [do-swing-and-wait]]
             [org.soulspace.clj.java.awt.core :as awt]
-            [org.soulspace.clj.java.awt.event :as event]
+            [org.soulspace.clj.java.awt.events :as event]
             [org.soulspace.clj.java.swing.core :as swing]
-            [org.soulspace.cmp.jfreechart.swing :as jfswing]
+            [org.soulspace.cmp.jfreechart.chart :as jfchart]
             [org.soulspace.annuity.domain.annuity :as domain]
             [org.soulspace.annuity.application.annuity :as app]
             [org.soulspace.annuity.application.pdf-report :as rpdf]
@@ -234,9 +234,9 @@
             [(swing/label {:text (app/i18n "label.details"):font heading-font}) "left, span, wrap 10"]
             [(swing/tabbed-pane {}
                          [[(app/i18n "label.redemptionPlan.table") (period-panel)]
-                          [(app/i18n "label.term.chart") (jfswing/chart-panel (app/term-chart))]
-                          [(app/i18n "label.cumulated.chart") (jfswing/chart-panel (app/cumulated-chart))]
-                          [(app/i18n "label.summary") (jfswing/chart-panel (app/redemption-interest-chart))]]
+                          [(app/i18n "label.term.chart") (jfchart/chart-panel (app/term-chart))]
+                          [(app/i18n "label.cumulated.chart") (jfchart/chart-panel (app/cumulated-chart))]
+                          [(app/i18n "label.summary") (jfchart/chart-panel (app/redemption-interest-chart))]]
                          ) "span, growx, growy, wrap"]])]
 
     (defn update-summary
