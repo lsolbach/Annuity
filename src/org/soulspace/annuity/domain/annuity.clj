@@ -114,7 +114,7 @@
         (> n 0) ; calculate with fixed term
         (new-spec k-0 i (mi/annuity-rate k-0 q n) i-t (m/ceil (/ n py)) pp extra)
         ; (> i-t 0) () ; ?
-        :default spec)
+        :else spec)
       spec)))
 
 (defn calc-periods-for-spec

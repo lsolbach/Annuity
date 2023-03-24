@@ -13,11 +13,10 @@
 (ns org.soulspace.annuity.application.annuity
   (:require [clojure.java.io :as io]
             [org.soulspace.clj.java.text :as text]
-            [org.soulspace.clj.application.i18n :as i18n]
+            [org.soulspace.clj.java.i18n :as i18n]
             [org.soulspace.cmp.svg.graphics2d :as g2d]
             [org.soulspace.cmp.jfreechart.chart :as jfchart]
             [org.soulspace.cmp.jfreechart.dataset :as jfdata]
-            [org.soulspace.cmp.jfreechart.export :as jfexport]
             [org.soulspace.annuity.domain.annuity :as domain]))
 
 ;;;;
@@ -60,7 +59,7 @@
 (defn save-spec 
   "Save the credit specification to a file."
   ([spec]
-    (save-spec spec "spec.dat"))
+    (save-spec spec (io/as-file "spec.dat")))
   ([spec file]
     (let [spec-data (with-out-str (pr spec))]
       (spit (.getName file) spec-data))))
@@ -167,10 +166,10 @@
 ;; Chart Exports
 ;;
 (defn chart-svg-string [chart width height]
-  (g2d/svg-to-string (g2d/to-svg (partial jfexport/draw-chart-with-graphics2d chart (g2d/rectangle-2d width height)))))
+  (g2d/svg-to-string (g2d/to-svg (partial jfchart/draw-chart-with-graphics2d chart (g2d/rectangle-2d width height)))))
 
 (defn save-chart-as-svg [svg-file chart width height]
-  (g2d/svg-to-file svg-file (g2d/to-svg (partial jfexport/draw-chart-with-graphics2d chart (g2d/rectangle-2d width height)))))
+  (g2d/svg-to-file svg-file (g2d/to-svg (partial jfchart/draw-chart-with-graphics2d chart (g2d/rectangle-2d width height)))))
 
 (defn save-charts []
   (when (seq @domain/periods)

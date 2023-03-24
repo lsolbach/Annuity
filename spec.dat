@@ -1,0 +1,1 @@
+#org.soulspace.annuity.domain.annuity.AnnuitySpec{:credit 100000, :p-interest 4, :rate 1000, :p-redemption 1, :term 11.0, :payment-period 3, :extra-redemptions []}

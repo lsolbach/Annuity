@@ -10,4 +10,6 @@
   :middleware [lein-tools-deps.plugin/resolve-dependencies-with-deps-edn]
   :lein-tools-deps/config {:config-files [:install :user :project]}
 
-  :test-paths ["test"])
+  :test-paths ["test"]
+;  :profiles {:uberjar {:aot [org.soulspace.annuity.application]}}
+  )
