@@ -20,7 +20,7 @@
             [org.soulspace.annuity.application.annuity :as app]
             [org.soulspace.annuity.application.pdf-report :as rpdf]
             [org.soulspace.annuity.application.excel-report :as rxls])
-  (:import [javax.swing Action BorderFactory JFrame]))
+  (:import [javax.swing JFrame]))
 
 ;;;;
 ;;;; Swing UI of the annuity application with clj.swing

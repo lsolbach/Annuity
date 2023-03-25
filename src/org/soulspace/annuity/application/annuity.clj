@@ -24,6 +24,24 @@
 ;;;;
 
 ;;
+;; Application State and Updates
+;;
+
+(def spec (ref (domain/new-spec)))
+(def redemptions (ref []))
+(def periods (ref []))
+
+(defn update-spec [s]
+  (dosync
+   (ref-set spec s)
+   (ref-set redemptions (:extra-redemptions @spec))))
+
+(defn update-periods
+  [p]
+  (dosync (ref-set periods p)))
+
+
+;;
 ;; Internationalization
 ;;
 

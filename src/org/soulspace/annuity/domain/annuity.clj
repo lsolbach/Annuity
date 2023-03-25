@@ -21,7 +21,6 @@
 ;;
 ;; Domain Data
 ;;
-
 (defrecord AnnuitySpec [credit p-interest rate p-redemption term payment-period extra-redemptions])
 (defrecord AnnuityPeriod [period year amount rate interest redemption c-interest c-cost])
 (defrecord ExtraRedemption [period amount])
@@ -44,26 +43,10 @@
     (ExtraRedemption. period ammount)))
 
 ;;
-;; Domain State and Updates
-;;
-
-(def spec (ref (new-spec)))
-(def redemptions (ref []))
-(def periods (ref []))
-(def payments-per-year [1, 2, 4, 12])
-
-(defn update-spec [s]
-  (dosync
-    (ref-set spec s)
-    (ref-set redemptions (:extra-redemptions @spec))))
-
-(defn update-periods
-  [p]
-  (dosync (ref-set periods p)))
-
-;;
 ;; Domain Functions
 ;;
+
+(def payments-per-year [1, 2, 4, 12])
 
 (defn financial-rounder
   "Returns a finacial rounding function."
@@ -143,3 +126,15 @@
                                          (+ a-act (get prev-period :c-cost 0)))))
           periods)))
     (calc-periods-new 0 [])))
+
+(comment
+  (def test-spec {:credit 100000
+                  :rate 1000
+                  :p-interest 4
+                  :p-redemption 1
+                  :term 10
+                  :payment-period 3
+                  :extra-redemptions []})
+  (calc-spec test-spec)
+  (calc-periods-for-spec test-spec)
+  )

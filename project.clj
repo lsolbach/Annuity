@@ -11,5 +11,6 @@
   :lein-tools-deps/config {:config-files [:install :user :project]}
 
   :test-paths ["test"]
+  :scm {:name "git" :url "https://github.com/lsolbach/Annuity"}
 ;  :profiles {:uberjar {:aot [org.soulspace.annuity.application]}}
   )
