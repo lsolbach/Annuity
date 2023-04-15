@@ -47,19 +47,7 @@
 ;; Domain State and Updates
 ;;
 
-(def spec (ref (new-spec)))
-(def redemptions (ref []))
-(def periods (ref []))
 (def payments-per-year [1, 2, 4, 12])
-
-(defn update-spec [s]
-  (dosync
-    (ref-set spec s)
-    (ref-set redemptions (:extra-redemptions @spec))))
-
-(defn update-periods
-  [p]
-  (dosync (ref-set periods p)))
 
 ;;
 ;; Domain Functions

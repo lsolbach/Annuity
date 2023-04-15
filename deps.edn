@@ -1,9 +1,8 @@
 {:deps {org.clojure/clojure {:mvn/version "1.10.1"}
         org.clojure/data.csv {:mvn/version "0.1.4"}
-        org.soulspace.clj/clj.java {:mvn/version "0.9.0"}
-        org.soulspace.clj/clj.swing {:mvn/version "0.8.0"}
+        org.soulspace.clj/clj.swing {:mvn/version "0.8.2"}
         org.soulspace.clj/cmp.batik {:mvn/version "0.2.1"}
-        org.soulspace.clj/cmp.fop {:mvn/version "0.3.1"}
+        org.soulspace.clj/cmp.fop {:mvn/version "0.3.2"}
         org.soulspace.clj/cmp.jfreechart {:mvn/version "0.5.0"}
         org.soulspace.clj/cmp.poi {:mvn/version "0.6.4"}
         org.soulspace.clj/math.financial {:mvn/version "0.7.0"}
