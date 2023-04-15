@@ -23,6 +23,35 @@
 ;;;; Application Logic
 ;;;;
 
+(def state (atom {:spec (domain/new-spec)
+                  :redemptions []
+                  :periods []}))
+(comment
+  (def spec (ref (domain/new-spec)))
+  (def redemptions (ref []))
+  (def periods (ref []))
+
+  (defn update-spec [s]
+    (dosync
+     (ref-set spec s)
+     (ref-set redemptions (:extra-redemptions @spec))))
+
+  (defn update-periods
+    [p]
+    (dosync (ref-set periods p)))
+  )
+
+(defn update-spec
+  ""
+  [s]
+  (swap! state assoc :spec s :redemptions (:extra-redemptions s)))
+
+(defn update-periods
+  ""
+  [p]
+  (swap! state assoc :periods p))
+
+
 ;;
 ;; Internationalization
 ;;
@@ -44,8 +73,13 @@
 ;;; Formatter Definitions
 ;;;
 
-(def money-fmt "Format for money." (text/decimal-format "0.00" {}))
-(def percent-fmt "Format for percent." (text/percent-format))
+(def money-fmt
+  "Format for money."
+  (text/decimal-format "0.00" {}))
+
+(def percent-fmt
+  "Format for percent."
+  (text/percent-format))
 
 (defn formatted-string
   "Returns a formatted string representation of value 'v' using the formatter 'fmt'."
@@ -67,7 +101,7 @@
 (defn load-spec
   "Load a credit specification from file."
   [file]
-  (domain/update-spec (domain/calc-spec (load-file (.getName file)))))
+  (update-spec (domain/calc-spec (load-file (.getName file)))))
 
 
 ;;;
@@ -75,105 +109,170 @@
 ;;;
 
 ; create data for the chart
-(defn period-amount [entry]
+(defn period-amount
+  [entry]
   [(:period entry) (:amount entry)])
 
-(defn period-rate [entry]
+(defn period-rate
+  [entry]
   [(:period entry) (:rate entry)])
 
-(defn period-redemption [entry]
+(defn period-redemption
+  [entry]
   [(:period entry) (:redemption entry)])
 
-(defn period-interest [entry]
+(defn period-interest
+  [entry]
   [(:period entry) (:interest entry)])
 
-(defn period-c-interest [entry]
+(defn period-c-interest
+  [entry]
   [(:period entry) (:c-interest entry)])
 
-(defn period-c-cost [entry]
+(defn period-c-cost
+  [entry]
   [(:period entry) (:c-cost entry)])
 
 ;;
 ;; Term Chart
 ;;
 
-(defn term-chart-data [periods]
-  (jfdata/xy-series-collection [(jfdata/xy-series (i18n "label.rate") (map period-rate periods))
-                                (jfdata/xy-series (i18n "label.interest") (map period-interest periods))
-                                (jfdata/xy-series (i18n "label.redemption") (map period-redemption periods))]))
+(defn term-chart-data
+  [periods]
+  (jfdata/xy-series-collection
+   [(jfdata/xy-series (i18n "label.rate")
+                      (map period-rate periods))
+    (jfdata/xy-series (i18n "label.interest")
+                      (map period-interest periods))
+    (jfdata/xy-series (i18n "label.redemption")
+                      (map period-redemption periods))]))
 
-(defn term-chart-update [data periods]
+(defn term-chart-update
+  [data periods]
   (.removeAllSeries data)
-  (.addSeries data (jfdata/xy-series (i18n "label.rate") (map period-rate periods)))
-  (.addSeries data (jfdata/xy-series (i18n "label.interest") (map period-interest periods)))
-  (.addSeries data (jfdata/xy-series (i18n "label.redemption") (map period-redemption periods))))
+  (.addSeries data (jfdata/xy-series (i18n "label.rate")
+                                     (map period-rate periods)))
+  (.addSeries data (jfdata/xy-series (i18n "label.interest")
+                                     (map period-interest periods)))
+  (.addSeries data (jfdata/xy-series (i18n "label.redemption")
+                                     (map period-redemption periods))))
 
-(defn term-chart []
-  (let [data (term-chart-data @domain/periods)
+(defn term-chart
+  [periods]
+  (let [data (term-chart-data periods)
         chart (jfchart/xy-line-chart (i18n "label.term.chart")
-                                     (i18n "label.period") (i18n "label.currency") data :vertical)]
+                                     (i18n "label.period")
+                                     (i18n "label.currency")
+                                     data :vertical)]
 ;    (set-renderer-properties chart {:shapesVisible true
 ;                                    :shapesFilled true})
     (defn get-term-chart [] chart)
-    (add-watch domain/periods :term-chart-update (fn [_ _ _ new-periods] (term-chart-update data new-periods)))
-    chart))
+    (add-watch state
+               :term-chart-update
+               (fn [_ _ old-state new-state]
+                 (when-not (= (:periods old-state)
+                              (:periods new-state))
+                   (term-chart-update data (:periods new-state)))))
+               chart))
 
 ;;
 ;; Cumulated Chart
 ;;
 
-(defn cumulated-chart-data [periods]
-  (jfdata/xy-series-collection [(jfdata/xy-series (i18n "label.amountRemaining") (map period-amount periods))
-                                (jfdata/xy-series (i18n "label.c-interest") (map period-c-interest periods))
-                                (jfdata/xy-series (i18n "label.c-cost") (map period-c-cost periods))]))
+(defn cumulated-chart-data
+  [periods]
+  (jfdata/xy-series-collection
+   [(jfdata/xy-series (i18n "label.amountRemaining")
+                      (map period-amount periods))
+    (jfdata/xy-series (i18n "label.c-interest")
+                      (map period-c-interest periods))
+    (jfdata/xy-series (i18n "label.c-cost")
+                      (map period-c-cost periods))]))
 
-(defn cumulated-chart-update [data periods]
+(defn cumulated-chart-update
+  [data periods]
   (.removeAllSeries data)
-  (.addSeries data (jfdata/xy-series (i18n "label.amountRemaining") (map period-amount periods)))
-  (.addSeries data (jfdata/xy-series (i18n "label.c-interest") (map period-c-interest periods)))
-  (.addSeries data (jfdata/xy-series (i18n "label.c-cost") (map period-c-cost periods))))
+  (.addSeries data (jfdata/xy-series (i18n "label.amountRemaining")
+                                     (map period-amount periods)))
+  (.addSeries data (jfdata/xy-series (i18n "label.c-interest")
+                                     (map period-c-interest periods)))
+  (.addSeries data (jfdata/xy-series (i18n "label.c-cost")
+                                     (map period-c-cost periods))))
 
-(defn cumulated-chart []
-  (let [data (cumulated-chart-data @domain/periods)
+(defn cumulated-chart
+  [periods]
+  (let [data (cumulated-chart-data periods)
         chart (jfchart/xy-line-chart (i18n "label.cumulated.chart")
-                                     (i18n "label.period") (i18n "label.currency") data :vertical)]
+                                     (i18n "label.period")
+                                     (i18n "label.currency")
+                                     data :vertical)]
 ;    (set-renderer-properties chart {:shapesVisible true
 ;                                    :shapesFilled true})
     (defn get-cumulated-chart [] chart)
-    (add-watch domain/periods :cumulated-chart-update (fn [_ _ _ new-periods] (cumulated-chart-update data new-periods)))
+    (add-watch state
+               :cumulated-chart-update
+               (fn [_ _ old-state new-state]
+                 (when-not (= (:periods old-state)
+                              (:periods new-state))
+                   (cumulated-chart-update data (:periods new-state)))))
     chart))
 
 ;;
 ;; Redemption/Interest Chart
 ;;
 
-(defn redemption-interest-chart-update [data periods]
+(defn redemption-interest-chart-update
+  [data periods]
   (let [c-interest (domain/calc-cumulated-interest periods)
         c-redemption (domain/calc-cumulated-redemption periods)]
     (.clear data)
-    (.setValue data (i18n "label.c-redemption") (domain/financial-rounder c-redemption))
-    (.setValue data (i18n "label.c-interest") (domain/financial-rounder c-interest))))
+    (.setValue data (i18n "label.c-redemption")
+               (domain/financial-rounder c-redemption))
+    (.setValue data (i18n "label.c-interest")
+               (domain/financial-rounder c-interest))))
 
-(defn redemption-interest-chart []
-  (let [data (jfdata/pie-dataset [[(i18n "label.c-redemption") (domain/financial-rounder (domain/calc-cumulated-redemption @domain/periods))]
-                                  [(i18n "label.c-interest") (domain/financial-rounder (domain/calc-cumulated-interest @domain/periods))]])
-        chart (jfchart/pie-chart (i18n "label.redemptionInterest.chart") data true true true)]
-    (defn get-redemption-interest-chart [] chart)
-    (add-watch domain/periods :redemption-interest-chart-update (fn [_ _ _ new-periods] (redemption-interest-chart-update data new-periods)))
+(defn redemption-interest-chart
+  [periods]
+  (let [data (jfdata/pie-dataset [[(i18n "label.c-redemption")
+                                   (domain/financial-rounder
+                                    (domain/calc-cumulated-redemption periods))]
+                                  [(i18n "label.c-interest")
+                                   (domain/financial-rounder
+                                    (domain/calc-cumulated-interest periods))]])
+        chart (jfchart/pie-chart (i18n "label.redemptionInterest.chart")
+                                 data true true true)]
+    (defn get-redemption-interest-chart
+      [] 
+      chart)
+    (add-watch state
+               :redemption-interest-chart-update
+               (fn [_ _ old-state new-state]
+                 (when-not (= (:periods old-state)
+                              (:periods new-state))
+                   (redemption-interest-chart-update data (:periods new-state)))))
     chart))
 
 ;;
 ;; Chart Exports
 ;;
-(defn chart-svg-string [chart width height]
-  (g2d/svg-to-string (g2d/to-svg (partial jfchart/draw-chart-with-graphics2d chart (g2d/rectangle-2d width height)))))
+(defn chart-svg-string
+  [chart width height]
+  (g2d/svg-to-string
+   (g2d/to-svg (partial jfchart/draw-chart-with-graphics2d chart
+                        (g2d/rectangle-2d width height)))))
 
 (defn save-chart-as-svg [svg-file chart width height]
-  (g2d/svg-to-file svg-file (g2d/to-svg (partial jfchart/draw-chart-with-graphics2d chart (g2d/rectangle-2d width height)))))
+  (g2d/svg-to-file
+   svg-file
+   (g2d/to-svg (partial jfchart/draw-chart-with-graphics2d chart
+                        (g2d/rectangle-2d width height)))))
 
 (defn save-charts []
-  (when (seq @domain/periods)
-    ; only save charts when data is available
-    (save-chart-as-svg "term-chart.svg" (get-term-chart) 640 480)
-    (save-chart-as-svg "cumulated-chart.svg" (get-cumulated-chart) 640 480)
-    (save-chart-as-svg "redemption-interest-chart.svg" (get-redemption-interest-chart) 640 480)))
+  ; only save charts when data is available
+  (when (seq (:periods @state))
+    (save-chart-as-svg "term-chart.svg"
+                       (get-term-chart) 640 480)
+    (save-chart-as-svg "cumulated-chart.svg"
+                       (get-cumulated-chart) 640 480)
+    (save-chart-as-svg "redemption-interest-chart.svg"
+                       (get-redemption-interest-chart) 640 480)))

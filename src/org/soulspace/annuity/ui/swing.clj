@@ -33,22 +33,22 @@
 (defn redemption-table-model
   []
   (swing/mapseq-table-model
-    [{:label (app/i18n "label.period") :key :period :edit false}
-     {:label (app/i18n "label.redemption") :key :amount :edit false :converter domain/financial-rounder}]
-    domain/redemptions))
+    [{:label (app/i18n "label.period") :key :period :editable false}
+     {:label (app/i18n "label.redemption") :key :amount :editable false :converter domain/financial-rounder}]
+    app/state [:redemptions]))
 
 (defn period-table-model
   []
   (swing/mapseq-table-model
-    [{:label (app/i18n "label.period") :key :period :edit false}
-     {:label (app/i18n "label.year") :key :year :edit false}
-     {:label (app/i18n "label.amountRemaining") :key :amount :edit false :converter domain/financial-rounder}
-     {:label (app/i18n "label.rate") :key :rate :edit false :converter domain/financial-rounder}
-     {:label (app/i18n "label.interest") :key :interest :edit false :converter domain/financial-rounder}
-     {:label (app/i18n "label.redemption") :key :redemption :edit false :converter domain/financial-rounder}
-     {:label (app/i18n "label.c-interest") :key :c-interest :edit false :converter domain/financial-rounder}
-     {:label (app/i18n "label.c-cost") :key :c-cost :edit false :converter domain/financial-rounder}]
-    domain/periods))
+    [{:label (app/i18n "label.period") :key :period :editable false}
+     {:label (app/i18n "label.year") :key :year :editable false}
+     {:label (app/i18n "label.amountRemaining") :key :amount :editable false :converter domain/financial-rounder}
+     {:label (app/i18n "label.rate") :key :rate :editable false :converter domain/financial-rounder}
+     {:label (app/i18n "label.interest") :key :interest :editable false :converter domain/financial-rounder}
+     {:label (app/i18n "label.redemption") :key :redemption :editable false :converter domain/financial-rounder}
+     {:label (app/i18n "label.c-interest") :key :c-interest :editable false :converter domain/financial-rounder}
+     {:label (app/i18n "label.c-cost") :key :c-cost :editable false :converter domain/financial-rounder}]
+    app/state [:periods]))
 
 ;;;
 ;;; Spec I/O
@@ -64,7 +64,7 @@
   "Save the specification."
   [filename]
   (println (str "Saving " filename))
-  (app/save-spec @domain/spec))
+  (app/save-spec (:spec @app/state)))
 
 ;;;
 ;;; Dialogs
@@ -85,14 +85,16 @@
     (let [period (swing/get-number field-period)
           amount (swing/get-number field-amount)
           redemption (domain/new-redemption period amount)]
-      (dosync (ref-set domain/redemptions (conj @domain/redemptions redemption)))
+      (swap! app/state assoc :redemptions (conj (:redemptions @app/state) redemption))
       (.setVisible d false)))
   
   (defn new-redemption-dialog
     "Creates a new redemption dialog."
     []
-    (event/add-action-listener button-cancel (swing/action (fn [_] (.setVisible d false))))
-    (event/add-action-listener button-ok (swing/action (fn [_] (redemption-dialog-ok-action))))
+    (event/add-action-listener button-cancel (swing/action (fn [_]
+                                                             (.setVisible d false))))
+    (event/add-action-listener button-ok (swing/action (fn [_]
+                                                         (redemption-dialog-ok-action))))
     (doto d
       (.pack)
       (.setVisible true))))
@@ -105,9 +107,11 @@
   "Creates the period panel."
   []
   (let [table-model (period-table-model)
-        money-cell-renderer (swing/table-cell-renderer (fn [v] (.format app/money-fmt v)) {:horizontalAlignment (swing/swing-keys :right)})
+        money-cell-renderer (swing/table-cell-renderer (fn [v]
+                                                         (.format app/money-fmt v))
+                                                       {:horizontalAlignment (swing/swing-keys :right)})
         table (swing/table {:model table-model
-                      :gridColor java.awt.Color/DARK_GRAY})
+                            :gridColor java.awt.Color/DARK_GRAY})
         b-print (swing/button {:action (swing/action (fn [_] (.print table)))
                          :text (app/i18n "button.print")
                          :toolTipText (app/i18n "tooltip.print")})]
@@ -118,7 +122,12 @@
     (.setCellRenderer (.getColumn (.getColumnModel table) 6) money-cell-renderer)
     (.setCellRenderer (.getColumn (.getColumnModel table) 7) money-cell-renderer)
 
-    (add-watch domain/periods :period-table-update (fn [_ _ _ _] (.fireTableDataChanged table-model)))
+    (add-watch app/state
+               :period-table-update
+               (fn [_ _ old-state new-state]
+                 (when-not (= (:periods old-state) (:periods new-state))
+                   (println :period-table-update)
+                   (.fireTableDataChanged table-model))))
 
     (swing/panel {:layout (swing/mig-layout {:layoutConstraints "wrap 1, insets 10, fill"
                                  :columnConstraints "[grow]"
@@ -129,103 +138,150 @@
 (defn input-panel
   "Creates the input panel."
   []
-  (let [f-credit (swing/formatted-text-field app/money-fmt {:value (:credit @domain/spec)
-                                                  :horizontalAlignment (swing/swing-keys :right)})
-        f-rate (swing/formatted-text-field app/money-fmt {:value (:rate @domain/spec)
-                                                :horizontalAlignment (swing/swing-keys :right)})
-        f-p-interest (swing/formatted-text-field app/money-fmt {:value (:p-interest @domain/spec)
-                                                      :horizontalAlignment (swing/swing-keys :right)})
-        f-p-redemption (swing/formatted-text-field app/money-fmt {:value (:p-redemption @domain/spec)
-                                                        :horizontalAlignment (swing/swing-keys :right)})
-        f-term (swing/integer-field {:value (:term @domain/spec)
+  (let [f-credit (swing/formatted-text-field
+                  app/money-fmt {:value (get-in @app/state [:spec :credit])
+                                 :horizontalAlignment (swing/swing-keys :right)})
+        f-rate (swing/formatted-text-field
+                app/money-fmt {:value (get-in @app/state [:spec :rate])
                                :horizontalAlignment (swing/swing-keys :right)})
-        f-rperiod (swing/combo-box {} [(app/i18n "label.redemptionPeriod.annually")
-                                 (app/i18n "label.redemptionPeriod.semiannually")
-                                 (app/i18n "label.redemptionPeriod.quarterly")
-                                 (app/i18n "label.redemptionPeriod.monthly")])
+        f-p-interest (swing/formatted-text-field
+                      app/money-fmt {:value (get-in @app/state [:spec :p-interest])
+                                     :horizontalAlignment (swing/swing-keys :right)})
+        f-p-redemption (swing/formatted-text-field
+                        app/money-fmt {:value (get-in @app/state [:spec :p-redemption])
+                                       :horizontalAlignment (swing/swing-keys :right)})
+        f-term (swing/integer-field {:value (get-in @app/state [:spec :term])
+                                     :horizontalAlignment (swing/swing-keys :right)})
+        f-rperiod (swing/combo-box {}
+                                   [(app/i18n "label.redemptionPeriod.annually")
+                                    (app/i18n "label.redemptionPeriod.semiannually")
+                                    (app/i18n "label.redemptionPeriod.quarterly")
+                                    (app/i18n "label.redemptionPeriod.monthly")])
         b-calc (swing/button {:text (app/i18n "button.calculate")})
         b-clear (swing/button {:text (app/i18n "button.clear")})
         b-add-redemption (swing/button {:action (swing/action (fn [_] (new-redemption-dialog)))
-                                  :text (app/i18n "button.add")})
+                                        :text (app/i18n "button.add")})
         b-remove-redemption (swing/button {;:action (action (fn [_] (remove-redemptions-action)))
-                                     :text (app/i18n "button.remove")}) ; TODO remove redemption
-        b-clear-redemption (swing/button {:action (swing/action (fn [_] (dosync (ref-set domain/redemptions []))))
-                                    :text (app/i18n "button.clear")})
+                                           :text (app/i18n "button.remove")}) ; TODO remove redemption
+        b-clear-redemption (swing/button {:action (swing/action
+                                                   (fn [_]
+                                                     (swap! app/state assoc :redemptions [])))
+                                          :text (app/i18n "button.clear")})
         table-model (redemption-table-model)
-        money-cell-renderer (swing/table-cell-renderer (fn [v] (.format app/money-fmt v)) {:horizontalAlignment (swing/swing-keys :right)})
+        money-cell-renderer (swing/table-cell-renderer (fn [v]
+                                                         (.format app/money-fmt v))
+                                                       {:horizontalAlignment (swing/swing-keys :right)})
         table (swing/table {:model table-model
-                      :gridColor java.awt.Color/DARK_GRAY})]
+                            :gridColor java.awt.Color/DARK_GRAY})]
 
     (.setCellRenderer (.getColumn (.getColumnModel table) 1) money-cell-renderer)
 
     (defn read-fields
       []
-      (domain/new-spec 
-        (swing/get-number f-credit)
-        (swing/get-number f-p-interest)
-        (swing/get-number f-rate)
-        (swing/get-number f-p-redemption)
-        (swing/get-number f-term)
-        (.getSelectedIndex f-rperiod)
-        @domain/redemptions ; vector of ExtraRedemptions
-        ))
-    
+      (domain/new-spec
+       (swing/get-number f-credit)
+       (swing/get-number f-p-interest)
+       (swing/get-number f-rate)
+       (swing/get-number f-p-redemption)
+       (swing/get-number f-term)
+       (.getSelectedIndex f-rperiod)
+       (:redemptions @app/state) ; vector of ExtraRedemptions
+       ))
+
     (defn update-fields
       [spec]
-        (.setValue f-credit (domain/financial-rounder (:credit spec)))
-        (.setValue f-rate (domain/financial-rounder (:rate spec)))
-        (.setValue f-p-interest (domain/financial-rounder (:p-interest spec)))
-        (.setValue f-p-redemption (domain/financial-rounder (:p-redemption spec)))
-        (.setValue f-term (domain/financial-rounder (:term spec)))
-        (.setSelectedIndex f-rperiod (:payment-period spec)))
+      (.setValue f-credit (domain/financial-rounder (:credit spec)))
+      (.setValue f-rate (domain/financial-rounder (:rate spec)))
+      (.setValue f-p-interest (domain/financial-rounder (:p-interest spec)))
+      (.setValue f-p-redemption (domain/financial-rounder (:p-redemption spec)))
+      (.setValue f-term (domain/financial-rounder (:term spec)))
+      (.setSelectedIndex f-rperiod (:payment-period spec)))
 
-    (defn calc-action [] (domain/update-spec (domain/calc-spec (read-fields))))
-    (defn clear-action [] (domain/update-spec (domain/new-spec)))
+    (defn calc-action [] (app/update-spec (domain/calc-spec (read-fields))))
+    (defn clear-action [] (app/update-spec (domain/new-spec)))
 
     (defn remove-redemptions-action
       []
       (print "Ought to remove rows with indices " (.getSelectedRows table) "."))
-    
-    ; watch input changes
-    (add-watch domain/spec :spec-update (fn [_ _ _ new-spec] (update-fields new-spec)))
-    (add-watch domain/spec :spec-calc (fn [_ _ _ new-spec] (domain/update-periods (domain/calc-periods-for-spec new-spec))))
-    (add-watch domain/redemptions :redemptions-update (fn [_ _ _ _] (.fireTableDataChanged table-model)))
-    (add-watch domain/redemptions :redemptions-spec-calc (fn [_ _ _ _] (domain/update-periods (domain/calc-periods-for-spec (read-fields)))))
 
-    (event/add-action-listener b-calc (swing/action (fn [_] (calc-action))))
-    (event/add-action-listener b-clear  (swing/action (fn [_] (clear-action))))
+    ; watch input changes
+    (add-watch app/state
+               :spec-update
+               (fn [_ _ old-state new-state]
+                 (when-not
+                  (= (:spec old-state) (:spec new-state))
+                   (println :spec-update)
+                   (update-fields (:spec new-state)))))
+    (add-watch app/state
+               :spec-calc
+               (fn [_ _ old-state new-state]
+                 (when-not
+                  (= (:spec old-state) (:spec new-state))
+                   (println :spec-calc)
+                   (app/update-periods (domain/calc-periods-for-spec (:spec new-state))))))
+    (add-watch app/state
+               :redemptions-update
+               (fn [_ _ old-state new-state]
+                 (when-not
+                  (= (:redemptions old-state) (:redemptions new-state))
+                   (println :redemptions-update)
+                   (.fireTableDataChanged table-model))))
+    (add-watch app/state
+               :redemptions-spec-calc
+               (fn [_ _ old-state new-state]
+                 (when-not
+                  (= (:redemptions old-state) (:redemptions new-state))
+                   (println :redemptions-spec-calc)
+                   (app/update-periods (domain/calc-periods-for-spec (read-fields))))))
+
+    (event/add-action-listener b-calc
+                               (swing/action (fn [_]
+                                               (calc-action))))
+    (event/add-action-listener b-clear
+                               (swing/action (fn [_]
+                                               (clear-action))))
 
     (swing/panel {:layout (swing/mig-layout {:layoutConstraints "insets 10, wrap 2, fill"
-                                 :columnConstraints "[left|grow]"})}
-           [[(swing/label {:text (app/i18n "label.data") :font heading-font}) "left, wrap 10"]
-            (swing/label {:text (app/i18n "label.amount")}) [f-credit "growx"]
-            (swing/label {:text (app/i18n "label.annuity")}) [f-rate "growx"]
-            (swing/label {:text (app/i18n "label.interestPercentage")}) [f-p-interest "growx"]
-            (swing/label {:text (app/i18n "label.redemptionPercentage")}) [f-p-redemption "growx"]
-            (swing/label {:text (app/i18n "label.terms")}) [f-term "growx"]
-            (swing/label {:text (app/i18n "label.redemptionPeriod")}) [f-rperiod "growx"]
-            [b-calc "span, tag right, split"] [b-clear "tag right, wrap 20"]
-            [(swing/label {:text (app/i18n "label.extraRedemptions"):font heading-font}) "left, wrap 10"]
-            [(swing/scroll-pane table) "span, growx, growy, wrap"]
-            [b-add-redemption "span, tag right, split"] [b-remove-redemption "span, tag right, split"] [b-clear-redemption "tag right"]])))
+                                             :columnConstraints "[left|grow]"})}
+                 [[(swing/label {:text (app/i18n "label.data") :font heading-font}) "left, wrap 10"]
+                  (swing/label {:text (app/i18n "label.amount")}) [f-credit "growx"]
+                  (swing/label {:text (app/i18n "label.annuity")}) [f-rate "growx"]
+                  (swing/label {:text (app/i18n "label.interestPercentage")}) [f-p-interest "growx"]
+                  (swing/label {:text (app/i18n "label.redemptionPercentage")}) [f-p-redemption "growx"]
+                  (swing/label {:text (app/i18n "label.terms")}) [f-term "growx"]
+                  (swing/label {:text (app/i18n "label.redemptionPeriod")}) [f-rperiod "growx"]
+                  [b-calc "span, tag right, split"] [b-clear "tag right, wrap 20"]
+                  [(swing/label {:text (app/i18n "label.extraRedemptions") :font heading-font}) "left, wrap 10"]
+                  [(swing/scroll-pane table) "span, growx, growy, wrap"]
+                  [b-add-redemption "span, tag right, split"] [b-remove-redemption "span, tag right, split"] [b-clear-redemption "tag right"]])))
 
 (defn result-panel
   "Creates the result panel."
   []
-  (let [f-years (swing/integer-field {:value (domain/years (count @domain/periods) (nth domain/payments-per-year (:payment-period @domain/spec)))
-                                :editable false
-                                :horizontalAlignment (swing/swing-keys :right)})
-        f-terms (swing/integer-field {:value (count @domain/periods)
-                                :editable false
-                                :horizontalAlignment (swing/swing-keys :right)})
-        f-c-interest (swing/formatted-text-field app/money-fmt {:value (domain/financial-rounder (domain/calc-cumulated-interest @domain/periods))
-                                                      :editable false
-                                                      :horizontalAlignment (swing/swing-keys :right)})
-        f-c-cost (swing/formatted-text-field app/money-fmt {:value (domain/financial-rounder (domain/calc-cumulated-cost @domain/periods))
-                                                  :editable false
-                                                  :horizontalAlignment (swing/swing-keys :right)})
-        p (swing/panel {:layout (swing/mig-layout {:layoutConstraints "wrap 4, insets 10, fill"
-                               :columnConstraints "[left|grow|left|grow]"})}
+  (let [f-years (swing/integer-field
+                 {:value (domain/years (count (:periods @app/state))
+                                       (nth domain/payments-per-year
+                                            (:payment-period (:spec @app/state))))
+                  :editable false
+                  :horizontalAlignment (swing/swing-keys :right)})
+        f-terms (swing/integer-field
+                 {:value (count (:periods @app/state))
+                  :editable false
+                  :horizontalAlignment (swing/swing-keys :right)})
+        f-c-interest (swing/formatted-text-field
+                      app/money-fmt
+                      {:value (domain/financial-rounder
+                               (domain/calc-cumulated-interest (:periods @app/state)))
+                       :editable false
+                       :horizontalAlignment (swing/swing-keys :right)})
+        f-c-cost (swing/formatted-text-field
+                  app/money-fmt {:value (domain/financial-rounder
+                                         (domain/calc-cumulated-cost (:periods @app/state)))
+                                 :editable false
+                                 :horizontalAlignment (swing/swing-keys :right)})
+        p (swing/panel {:layout (swing/mig-layout
+                                 {:layoutConstraints "wrap 4, insets 10, fill"
+                                  :columnConstraints "[left|grow|left|grow]"})}
            [[(swing/label {:text (app/i18n "label.summary") :font heading-font}) "left, span, wrap 10"]
             (swing/label {:text (app/i18n "label.years")})      [f-years "growx"]
             (swing/label {:text (app/i18n "label.rates")})      [f-terms "growx"]
@@ -233,20 +289,33 @@
             (swing/label {:text (app/i18n "label.c-cost")})     [f-c-cost "growx, wrap 20"]
             [(swing/label {:text (app/i18n "label.details"):font heading-font}) "left, span, wrap 10"]
             [(swing/tabbed-pane {}
-                         [[(app/i18n "label.redemptionPlan.table") (period-panel)]
-                          [(app/i18n "label.term.chart") (jfchart/chart-panel (app/term-chart))]
-                          [(app/i18n "label.cumulated.chart") (jfchart/chart-panel (app/cumulated-chart))]
-                          [(app/i18n "label.summary") (jfchart/chart-panel (app/redemption-interest-chart))]]
-                         ) "span, growx, growy, wrap"]])]
+                                [[(app/i18n "label.redemptionPlan.table")
+                                  (period-panel)]
+                                 [(app/i18n "label.term.chart")
+                                  (jfchart/chart-panel (app/term-chart (:periods @app/state)))]
+                                 [(app/i18n "label.cumulated.chart") 
+                                  (jfchart/chart-panel (app/cumulated-chart (:periods @app/state)))]
+                                 [(app/i18n "label.summary")
+                                  (jfchart/chart-panel (app/redemption-interest-chart (:periods @app/state)))]]) "span, growx, growy, wrap"]])]
 
     (defn update-summary
       []
-      (swing/set-value f-years (domain/years (count @domain/periods) (nth domain/payments-per-year (:payment-period @domain/spec))))
-      (swing/set-value f-terms (count @domain/periods))
-      (swing/set-value f-c-interest (domain/financial-rounder (domain/calc-cumulated-interest @domain/periods)))
-      (swing/set-value f-c-cost (domain/financial-rounder (domain/calc-cumulated-cost @domain/periods))))
+      (swing/set-value f-years (domain/years (count (:periods @app/state))
+                                             (nth domain/payments-per-year
+                                                  (:payment-period (:spec @app/state)))))
+      (swing/set-value f-terms (count (:periods @app/state)))
+      (swing/set-value f-c-interest (domain/financial-rounder
+                                     (domain/calc-cumulated-interest (:periods @app/state))))
+      (swing/set-value f-c-cost (domain/financial-rounder
+                                 (domain/calc-cumulated-cost (:periods @app/state)))))
     
-    (add-watch domain/periods :summary-update (fn [_ _ _ _] (update-summary)))
+    (add-watch app/state
+               :summary-update
+               (fn [_ _ old-state new-state]
+                 (when-not
+                  (= (:periods old-state) (:periods new-state))
+                   (println :summary-update)
+                   (update-summary))))
   p))
 
 ;;;
@@ -258,21 +327,25 @@
   []
   (swing/menu-bar {}
             [(swing/menu {:text (app/i18n "menu.file")}
-                   [(swing/menu-item {:action (swing/action (fn [_] ) ; TODO 
+                   [(swing/menu-item {:action (swing/action (fn [_]
+                                                              ) ; TODO 
                                                 {:name (app/i18n "menu.file.new")
                                                  :accelerator (swing/key-stroke \N :ctrl)
                                                  :mnemonic nil})})
-                    (swing/menu-item {:action (swing/action (fn [_] (if-let [file (swing/file-open-dialog ".")]
+                    (swing/menu-item {:action (swing/action (fn [_]
+                                                              (if-let [file (swing/file-open-dialog ".")]
                                                           (app/load-spec file)))
                                                 {:name (app/i18n "menu.file.load")
                                                  :accelerator (swing/key-stroke \O :ctrl)
                                                  :mnemonic nil})})
-                    (swing/menu-item {:action (swing/action (fn [_] (app/save-spec @domain/spec))
+                    (swing/menu-item {:action (swing/action (fn [_]
+                                                              (app/save-spec (:spec @app/state)))
                                                 {:name (app/i18n "menu.file.save")
                                                  :accelerator (swing/key-stroke \S :ctrl)
                                                  :mnemonic nil})})
-                    (swing/menu-item {:action (swing/action (fn [_] (if-let [file (swing/file-save-dialog ".")]
-                                                           (app/save-spec @domain/spec file)))
+                    (swing/menu-item {:action (swing/action (fn [_]
+                                                              (if-let [file (swing/file-save-dialog ".")]
+                                                           (app/save-spec (:spec @app/state) file)))
                                                 {:name (app/i18n "menu.file.saveAs")
                                                  :accelerator (swing/key-stroke \A :ctrl)
                                                  :mnemonic nil})})
@@ -282,35 +355,47 @@
                                                  :accelerator (swing/key-stroke \Q :ctrl)
                                                  :mnemonic nil})})])
              (swing/menu {:text (app/i18n "menu.calc")}
-                   [(swing/menu-item {:action (swing/action (fn [_] (calc-action))
+                   [(swing/menu-item {:action (swing/action (fn [_]
+                                                              (calc-action))
                                                 {:name (app/i18n "menu.calc.calc")})})
-                    (swing/menu-item {:action (swing/action (fn [_] (clear-action))
+                    (swing/menu-item {:action (swing/action (fn [_]
+                                                              (clear-action))
                                                 {:name (app/i18n "menu.calc.clear")})})
-                    (swing/menu-item {:action (swing/action (fn [_] (rpdf/generate-pdf-report))
+                    (swing/menu-item {:action (swing/action (fn [_]
+                                                              (rpdf/generate-pdf-report @app/state))
                                                 {:name (app/i18n "menu.calc.report.pdf")})})
-                    (swing/menu-item {:action (swing/action (fn [_] (rxls/generate-excel-report))
+                    (swing/menu-item {:action (swing/action (fn [_]
+                                                              (rxls/generate-excel-report @app/state))
                                                 {:name (app/i18n "menu.calc.report.excel")})})
-                    (swing/menu-item {:action (swing/action (fn [_] (app/save-charts))
+                    (swing/menu-item {:action (swing/action (fn [_]
+                                                              (app/save-charts))
                                                 {:name (app/i18n "menu.calc.charts")})})])
              (swing/menu {:text (app/i18n "menu.settings")}
                    [(swing/menu {:text (app/i18n "menu.settings.layout")}
-                          [(swing/menu-item {:action (swing/action (fn [_] (swing/set-look-and-feel ui-frame :metal))
+                          [(swing/menu-item {:action (swing/action (fn [_]
+                                                                     (swing/set-look-and-feel ui-frame :metal))
                                                        {:name (app/i18n "menu.settings.layout.metal") :mnemonic nil})})
-                           (swing/menu-item {:action (swing/action (fn [_] (swing/set-look-and-feel ui-frame :nimbus))
+                           (swing/menu-item {:action (swing/action (fn [_]
+                                                                     (swing/set-look-and-feel ui-frame :nimbus))
                                                        {:name (app/i18n "menu.settings.layout.nimbus") :mnemonic nil})})
-                           (swing/menu-item {:action (swing/action (fn [_] (swing/set-look-and-feel ui-frame :synth))
+                           (swing/menu-item {:action (swing/action (fn [_]
+                                                                     (swing/set-look-and-feel ui-frame :synth))
                                                        {:name (app/i18n "menu.settings.layout.synth") :mnemonic nil})})
-                           (swing/menu-item {:action (swing/action (fn [_] (swing/set-look-and-feel ui-frame :gtk))
+                           (swing/menu-item {:action (swing/action (fn [_]
+                                                                     (swing/set-look-and-feel ui-frame :gtk))
                                                        {:name (app/i18n "menu.settings.layout.gtk") :mnemonic nil})})])
                     (swing/menu {:text (app/i18n "menu.settings.locale")} ; TODO add other locales
-                               [(swing/menu-item {:action (swing/action (fn [_] ) ; TODO set locale to de_DE
+                               [(swing/menu-item {:action (swing/action (fn [_]
+                                                                          ) ; TODO set locale to de_DE
                                                        {:name (app/i18n "menu.settings.locale.de_DE") :mnemonic nil})})
-                                (swing/menu-item {:action (swing/action (fn [_] ) ; TODO set locale to en_GB
+                                (swing/menu-item {:action (swing/action (fn [_]
+                                                                          ) ; TODO set locale to en_GB
                                                        {:name (app/i18n "menu.settings.locale.en_GB") :mnemonic nil})})])])
              (swing/menu {:text (app/i18n "menu.help")}
-                   [(swing/menu-item {:action (swing/action (fn [_] (swing/message-dialog (app/i18n "dialog.about.message")
-                                                                        (app/i18n "dialog.about.title")
-                                                                        :info))
+                   [(swing/menu-item {:action (swing/action (fn [_]
+                                                              (swing/message-dialog (app/i18n "dialog.about.message")
+                                                                                    (app/i18n "dialog.about.title")
+                                                                                    :info))
                                                 {:name (app/i18n "menu.help.about")
                                                  :accelerator (swing/key-stroke \A :ctrl :alt)
                                                  :mnemonic nil})})])]))

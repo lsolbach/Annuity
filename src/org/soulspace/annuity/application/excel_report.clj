@@ -21,14 +21,14 @@
 ;;;;
 
 (defn generate-excel-report
-  []
+  [state]
   (excel/write-workbook
     "Report.xlsx"
     (excel/new-workbook
       {}
-      (let [spec @domain/spec
-            redemptions @domain/redemptions
-            periods @domain/periods
+      (let [spec (:spec state)
+            redemptions (:redemptions state)
+            periods (:periods state)
             data-format (excel/new-data-format {})
             heading-font (excel/new-font {:fontHeightInPoints 16})
             heading-style (excel/new-cell-style {:font heading-font})

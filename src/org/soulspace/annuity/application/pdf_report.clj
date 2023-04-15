@@ -24,7 +24,8 @@
 ;;;;   and Apache FOP via 'cmp.fop'
 ;;;;
 
-(defn rp-spec [spec]
+(defn rp-spec
+  [spec]
   (fo/table {:space-before "10pt"}
     (fo/table-column {:column-number "1"})
     (fo/table-column {:column-number "2"})
@@ -51,7 +52,8 @@
         (fo/table-cell {:text-align "left"} (fo/block {} (app/i18n "label.redemptionPeriod")))
         (fo/table-cell {:text-align "left"} (fo/block {} (str (:payment-period spec))))))))
 
-(defn rp-period [period]
+(defn rp-period
+  [period]
   (fo/table-row
     {:border-style "solid"}
     (fo/table-cell {:text-align "right"} (fo/block {} (str (domain/financial-rounder (:period period)))))
@@ -63,7 +65,8 @@
     (fo/table-cell {:text-align "right"} (fo/block {} (app/formatted-string app/money-fmt (domain/financial-rounder (:c-interest period)))))
     (fo/table-cell {:text-align "right"} (fo/block {} (app/formatted-string app/money-fmt (domain/financial-rounder (:c-cost period)))))))
 
-(defn rp-period-table [periods]
+(defn rp-period-table
+  [periods]
   (fo/table {:space-before "10pt"}
     (fo/table-column {:column-number "1"})
     (fo/table-column {:column-number "2"})
@@ -92,7 +95,8 @@
 ;(def svgx "<svg:svg height='200' width='300' xmlns:svg='http://www.w3.org/2000/svg'><svg:g><svg:circle cx='120' cy='90' style='fill: gray' r='80'></svg:circle><svg:circle cx='20' cy='90' style='fill: gray' r='10'></svg:circle><svg:circle cx='220' cy='90' style='fill: gray' r='10'></svg:circle><svg:text style='fill: white; stroke: black; font-family: sans-serif; font-size: 25; font-weight: bold' x='65' y='75'>Scalable</svg:text><svg:text style='fill: white; stroke: black; font-family: sans-serif; font-size: 25; font-weight: bold' x='75' y='100'>Vector</svg:text><svg:text style='fill: white; stroke: black; font-family: sans-serif; font-size: 25; font-weight: bold' x='60' y='125'>Graphics</svg:text></svg:g></svg:svg>")
 (def svgx "<svg:svg height='200' width='300' xmlns:svg='http://www.w3.org/2000/svg'><svg:g><svg:circle cx='120' cy='90' style='fill: gray' r='80'></svg:circle></svg:g></svg:svg>")
 
-(defn rp-redemption-interest-chart []
+(defn rp-redemption-interest-chart
+  []
   (let [;svg1 (parse-str (chart-svg-string (get-redemption-interest-chart) 1280 960))
         svg1 (xml/parse-str svgx)
         ifo1 (fo/block {} (fo/instream-foreign-object {} svg1))]
@@ -107,32 +111,36 @@
   (fo/block {}
     (fo/external-graphic {:src "cumulated-chart.svg"})))
 
-(defn rp-layout []
+(defn rp-layout
+  []
   (fo/layout-master-set
     {}
     (fo/simple-page-master
       {:master-name "single" :page-height "297mm" :page-width "210mm"}
       (fo/region-body {:margin "7mm"}))))
 
-(defn rp-content []
+(defn rp-content
+  [state]
   (fo/page-sequence
     {:master-reference "single"}
     (fo/flow
       {:flow-name "xsl-region-body" }
       (fo/block {:font-family "Times" :font-size "16pt" :font-variant "small-caps"} (app/i18n "label.data"))
-      (rp-spec @domain/spec)
-      (rp-period-table @domain/periods)
+      (rp-spec (:spec state))
+      (rp-period-table (:periods state))
       ;(cumulated-chart-svg)
       (rp-redemption-interest-chart)
       )))
 
-(defn rp-report []
+(defn rp-report
+  [state]
   (fo/root {}
     (rp-layout)
-    (rp-content)))
+    (rp-content state)))
 
-(defn generate-pdf-report []
-  (let [fo-report (rp-report)
+(defn generate-pdf-report
+  [state]
+  (let [fo-report (rp-report state)
         fop-factory (fop/new-fop-factory "fop.xconf")]
     (println "Generate Report" (xml/emit-str fo-report))
     (fop/fo-to-pdf fop-factory (xutil/string-input-source (xml/emit-str fo-report)) (io/as-file "report.pdf"))
