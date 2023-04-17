@@ -13,8 +13,9 @@
 (ns org.soulspace.annuity.ui.swing
   (:require [clojure.tools.swing-utils :refer [do-swing-and-wait]]
             [org.soulspace.clj.java.awt.core :as awt]
-            [org.soulspace.clj.java.awt.events :as event]
+            [org.soulspace.clj.java.awt.events :as aevt]
             [org.soulspace.clj.java.swing.core :as swing]
+            [org.soulspace.clj.java.swing.events :as sevt]
             [org.soulspace.cmp.jfreechart.chart :as jfchart]
             [org.soulspace.annuity.domain.annuity :as domain]
             [org.soulspace.annuity.application.annuity :as app]
@@ -91,9 +92,9 @@
   (defn new-redemption-dialog
     "Creates a new redemption dialog."
     []
-    (event/add-action-listener button-cancel (swing/action (fn [_]
+    (sevt/add-action-listener button-cancel (swing/action (fn [_]
                                                              (.setVisible d false))))
-    (event/add-action-listener button-ok (swing/action (fn [_]
+    (sevt/add-action-listener button-ok (swing/action (fn [_]
                                                          (redemption-dialog-ok-action))))
     (doto d
       (.pack)
@@ -234,10 +235,10 @@
                    (println :redemptions-spec-calc)
                    (app/update-periods (domain/calc-periods-for-spec (read-fields))))))
 
-    (event/add-action-listener b-calc
+    (sevt/add-action-listener b-calc
                                (swing/action (fn [_]
                                                (calc-action))))
-    (event/add-action-listener b-clear
+    (sevt/add-action-listener b-clear
                                (swing/action (fn [_]
                                                (clear-action))))
 

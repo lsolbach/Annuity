@@ -33,29 +33,11 @@
             heading-font (excel/new-font {:fontHeightInPoints 16})
             heading-style (excel/new-cell-style {:font heading-font})
             label-style (excel/new-cell-style {:fillForegroundColor (excel/color-index IndexedColors/LIGHT_YELLOW)
-                                         :fillPattern (excel/cell-fill-style :solid-foreground)})
+                                               :fillPattern (excel/fill-pattern-type :solid-foreground)})
             percent-style (excel/new-cell-style {:alignment (excel/horizontal-alignment :right) :dataFormat (.getFormat data-format "0.00%")})
             money-style (excel/new-cell-style {:alignment (excel/horizontal-alignment :right) :dataFormat (.getFormat data-format "0.00")})
             period-style (excel/new-cell-style {:alignment (excel/horizontal-alignment :right) :dataFormat (.getFormat data-format "0")})]
         
-        (defn redemption-row
-          [redemption]
-          (excel/new-row {}
-                   (excel/new-cell {:cellStyle period-style} (str (domain/financial-rounder (:period redemption))))
-                   (excel/new-cell {:cellType (excel/cell-type :numeric) :cellStyle money-style} (str (domain/financial-rounder (:amount redemption))))))
-
-        (defn period-row
-          [period]
-          (excel/new-row {}
-                   (excel/new-cell {:cellStyle period-style} (str (domain/financial-rounder (:period period))))
-                   (excel/new-cell {:cellStyle period-style} (str (domain/financial-rounder (:year period))))
-                   (excel/new-cell {:cellType (excel/cell-type :numeric) :cellStyle money-style} (str (domain/financial-rounder (:amount period))))
-                   (excel/new-cell {:cellType (excel/cell-type :numeric) :cellStyle money-style} (str (domain/financial-rounder (:rate period))))
-                   (excel/new-cell {:cellType (excel/cell-type :numeric) :cellStyle money-style} (str (domain/financial-rounder (:interest period))))
-                   (excel/new-cell {:cellType (excel/cell-type :numeric) :cellStyle money-style} (str (domain/financial-rounder (:redemption period))))
-                   (excel/new-cell {:cellType (excel/cell-type :numeric) :cellStyle money-style} (str (domain/financial-rounder (:c-interest period))))
-                   (excel/new-cell {:cellType (excel/cell-type :numeric) :cellStyle money-style} (str (domain/financial-rounder (:c-cost period))))))
-
         ; Spec Sheet
         (excel/new-sheet {}
                    (excel/new-row {})
@@ -81,29 +63,43 @@
                             (excel/new-cell {:cellStyle period-style} (str (:payment-period spec)))))
       
         ; Extra Redemption Sheet
-        (excel/new-sheet {}
-                   (excel/new-row {})
-                   (excel/new-row {}
-                            (excel/new-cell {:cellStyle heading-style} (app/i18n "label.extraRedemptions")))
-                   (excel/new-row {}
-                            (excel/new-cell {:cellStyle label-style} (app/i18n "label.period"))
-                            (excel/new-cell {:cellStyle label-style} (app/i18n "label.redemption")))
-                   (doseq [redemption redemptions]
-                     (redemption-row redemption)))
+        (excel/new-sheet
+         {}
+         (excel/new-row {})
+         (excel/new-row {}
+                        (excel/new-cell {:cellStyle heading-style} (app/i18n "label.extraRedemptions")))
+         (excel/new-row {}
+                        (excel/new-cell {:cellStyle label-style} (app/i18n "label.period"))
+                        (excel/new-cell {:cellStyle label-style} (app/i18n "label.redemption")))
+         (doseq [redemption redemptions]
+           (excel/new-row
+            {}
+            (excel/new-cell {:cellStyle period-style} (str (domain/financial-rounder (:period redemption))))
+            (excel/new-cell {:cellType (excel/cell-type :numeric) :cellStyle money-style} (str (domain/financial-rounder (:amount redemption)))))))
 
         ; Redemption Plan Sheet
-        (excel/new-sheet {}
-                   (excel/new-row {})
-                   (excel/new-row {}
-                            (excel/new-cell {:cellStyle heading-style} (app/i18n "label.redemptionPlan")))
-                   (excel/new-row {}
-                            (excel/new-cell {:cellStyle label-style} (app/i18n "label.period"))
-                            (excel/new-cell {:cellStyle label-style} (app/i18n "label.year"))
-                            (excel/new-cell {:cellStyle label-style} (app/i18n "label.amountRemaining"))
-                            (excel/new-cell {:cellStyle label-style} (app/i18n "label.rate"))
-                            (excel/new-cell {:cellStyle label-style} (app/i18n "label.interest"))
-                            (excel/new-cell {:cellStyle label-style} (app/i18n "label.redemption"))
-                            (excel/new-cell {:cellStyle label-style} (app/i18n "label.c-interest"))
-                            (excel/new-cell {:cellStyle label-style} (app/i18n "label.c-cost")))
-                   (doseq [period periods]
-                     (period-row period)))))))
+        (excel/new-sheet
+         {}
+         (excel/new-row {})
+         (excel/new-row {}
+                        (excel/new-cell {:cellStyle heading-style} (app/i18n "label.redemptionPlan")))
+         (excel/new-row {}
+                        (excel/new-cell {:cellStyle label-style} (app/i18n "label.period"))
+                        (excel/new-cell {:cellStyle label-style} (app/i18n "label.year"))
+                        (excel/new-cell {:cellStyle label-style} (app/i18n "label.amountRemaining"))
+                        (excel/new-cell {:cellStyle label-style} (app/i18n "label.rate"))
+                        (excel/new-cell {:cellStyle label-style} (app/i18n "label.interest"))
+                        (excel/new-cell {:cellStyle label-style} (app/i18n "label.redemption"))
+                        (excel/new-cell {:cellStyle label-style} (app/i18n "label.c-interest"))
+                        (excel/new-cell {:cellStyle label-style} (app/i18n "label.c-cost")))
+         (doseq [period periods]
+           (excel/new-row
+            {}
+            (excel/new-cell {:cellStyle period-style} (str (domain/financial-rounder (:period period))))
+            (excel/new-cell {:cellStyle period-style} (str (domain/financial-rounder (:year period))))
+            (excel/new-cell {:cellType (excel/cell-type :numeric) :cellStyle money-style} (str (domain/financial-rounder (:amount period))))
+            (excel/new-cell {:cellType (excel/cell-type :numeric) :cellStyle money-style} (str (domain/financial-rounder (:rate period))))
+            (excel/new-cell {:cellType (excel/cell-type :numeric) :cellStyle money-style} (str (domain/financial-rounder (:interest period))))
+            (excel/new-cell {:cellType (excel/cell-type :numeric) :cellStyle money-style} (str (domain/financial-rounder (:redemption period))))
+            (excel/new-cell {:cellType (excel/cell-type :numeric) :cellStyle money-style} (str (domain/financial-rounder (:c-interest period))))
+            (excel/new-cell {:cellType (excel/cell-type :numeric) :cellStyle money-style} (str (domain/financial-rounder (:c-cost period)))))))))))
