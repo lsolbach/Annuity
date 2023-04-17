@@ -11,5 +11,9 @@
   :lein-tools-deps/config {:config-files [:install :user :project]}
 
   :test-paths ["test"]
+  :profiles {:dev {:dependencies [[djblue/portal "0.37.1"]
+                                  [criterium "0.4.6"]]
+                   :global-vars {*warn-on-reflection* true}}}
+
 ;  :profiles {:uberjar {:aot [org.soulspace.annuity.application]}}
   )
