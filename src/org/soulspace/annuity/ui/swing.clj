@@ -31,11 +31,19 @@
 
 (def heading-font (awt/font (awt/font-names :dialog) [(awt/font-styles :bold)] 14))
 
+(defn remove-by-index
+  "Removes elem with index 'idx' from coll."
+  [coll idx]
+  (into (subvec coll 0 idx) (subvec coll (inc idx))))
+
 (defn redemption-table-model
   []
   (swing/mapseq-table-model
     [{:label (app/i18n "label.period") :key :period :editable false}
-     {:label (app/i18n "label.redemption") :key :amount :editable false :converter domain/financial-rounder}]
+     {:label (app/i18n "label.redemption")
+      :key :amount
+      :editable false
+      :converter domain/financial-rounder}]
     app/state [:redemptions]))
 
 (defn period-table-model
@@ -43,12 +51,30 @@
   (swing/mapseq-table-model
     [{:label (app/i18n "label.period") :key :period :editable false}
      {:label (app/i18n "label.year") :key :year :editable false}
-     {:label (app/i18n "label.amountRemaining") :key :amount :editable false :converter domain/financial-rounder}
-     {:label (app/i18n "label.rate") :key :rate :editable false :converter domain/financial-rounder}
-     {:label (app/i18n "label.interest") :key :interest :editable false :converter domain/financial-rounder}
-     {:label (app/i18n "label.redemption") :key :redemption :editable false :converter domain/financial-rounder}
-     {:label (app/i18n "label.c-interest") :key :c-interest :editable false :converter domain/financial-rounder}
-     {:label (app/i18n "label.c-cost") :key :c-cost :editable false :converter domain/financial-rounder}]
+     {:label (app/i18n "label.amountRemaining")
+      :key :amount
+      :editable false
+      :converter domain/financial-rounder}
+     {:label (app/i18n "label.rate")
+      :key :rate
+      :editable false
+      :converter domain/financial-rounder}
+     {:label (app/i18n "label.interest")
+      :key :interest
+      :editable false
+      :converter domain/financial-rounder}
+     {:label (app/i18n "label.redemption")
+      :key :redemption
+      :editable false
+      :converter domain/financial-rounder}
+     {:label (app/i18n "label.c-interest")
+      :key :c-interest
+      :editable false
+      :converter domain/financial-rounder}
+     {:label (app/i18n "label.c-cost")
+      :key :c-cost
+      :editable false
+      :converter domain/financial-rounder}]
     app/state [:periods]))
 
 ;;;
@@ -75,27 +101,26 @@
       field-amount (swing/formatted-text-field app/money-fmt {:columns 10 :value 0.0})
       button-ok (swing/button {:text (app/i18n "button.ok")})
       button-cancel (swing/button {:text (app/i18n "button.cancel")})
-      d (swing/dialog {:title (app/i18n "dialog.extra-redemption.title")}                  
-                [(swing/panel {:layout (swing/mig-layout {:layoutConstraints "wrap 2"})}
-                        [(swing/label {:text (app/i18n "label.period")}) field-period
-                         (swing/label {:text (app/i18n "label.redemption")}) field-amount
-                         [button-ok "span, split, tag ok"] [button-cancel "tag cancel"]])])]
+      d (swing/dialog {:title (app/i18n "dialog.extra-redemption.title")}
+                      [(swing/panel {:layout (swing/mig-layout {:layoutConstraints "wrap 2"})}
+                                    [(swing/label {:text (app/i18n "label.period")}) field-period
+                                     (swing/label {:text (app/i18n "label.redemption")}) field-amount
+                                     [button-ok "span, split, tag ok"] [button-cancel "tag cancel"]])])]
 
   (defn redemption-dialog-ok-action
     []
     (let [period (swing/get-number field-period)
           amount (swing/get-number field-amount)
           redemption (domain/new-redemption period amount)]
-      (swap! app/state assoc :redemptions (conj (:redemptions @app/state) redemption))
+      (swap! app/state update :redemptions conj redemption)
       (.setVisible d false)))
-  
+
+  (sevt/add-action-listener button-cancel (swing/action (fn [_] (.setVisible d false))))
+  (sevt/add-action-listener button-ok (swing/action (fn [_] (redemption-dialog-ok-action))))
+
   (defn new-redemption-dialog
     "Creates a new redemption dialog."
     []
-    (sevt/add-action-listener button-cancel (swing/action (fn [_]
-                                                             (.setVisible d false))))
-    (sevt/add-action-listener button-ok (swing/action (fn [_]
-                                                         (redemption-dialog-ok-action))))
     (doto d
       (.pack)
       (.setVisible true))))
@@ -127,7 +152,6 @@
                :period-table-update
                (fn [_ _ old-state new-state]
                  (when-not (= (:periods old-state) (:periods new-state))
-                   (println :period-table-update)
                    (.fireTableDataChanged table-model))))
 
     (swing/panel {:layout (swing/mig-layout {:layoutConstraints "wrap 1, insets 10, fill"
@@ -160,22 +184,37 @@
                                     (app/i18n "label.redemptionPeriod.monthly")])
         b-calc (swing/button {:text (app/i18n "button.calculate")})
         b-clear (swing/button {:text (app/i18n "button.clear")})
-        b-add-redemption (swing/button {:action (swing/action (fn [_] (new-redemption-dialog)))
-                                        :text (app/i18n "button.add")})
-        b-remove-redemption (swing/button {;:action (action (fn [_] (remove-redemptions-action)))
-                                           :text (app/i18n "button.remove")}) ; TODO remove redemption
-        b-clear-redemption (swing/button {:action (swing/action
-                                                   (fn [_]
-                                                     (swap! app/state assoc :redemptions [])))
-                                          :text (app/i18n "button.clear")})
         table-model (redemption-table-model)
         money-cell-renderer (swing/table-cell-renderer (fn [v]
                                                          (.format app/money-fmt v))
                                                        {:horizontalAlignment (swing/swing-keys :right)})
         table (swing/table {:model table-model
-                            :gridColor java.awt.Color/DARK_GRAY})]
+                            :selectionMode (swing/list-selection-keys :single)
+                            :gridColor java.awt.Color/DARK_GRAY})
+        list-selection-model (swing/get-selection-model table)
+        b-add-redemption (swing/button {:action (swing/action (fn [_] (new-redemption-dialog)))
+                                        :text (app/i18n "button.add")})
+        b-remove-redemption (swing/button {:action (swing/action
+                                                    (fn [_]
+                                                      (swap! app/state update :redemptions 
+                                                             remove-by-index (.getMinSelectionIndex list-selection-model))))
+                                           :text (app/i18n "button.remove")
+                                           :enabled false}) ; TODO remove redemption
+        b-clear-redemption (swing/button {:action (swing/action
+                                                   (fn [_]
+                                                     (swap! app/state assoc :redemptions [])))
+                                          :text (app/i18n "button.clear")
+                                          :enabled false})]
 
     (.setCellRenderer (.getColumn (.getColumnModel table) 1) money-cell-renderer)
+    (-> list-selection-model
+        (sevt/add-list-selection-listener
+         (sevt/list-selection-listener
+          (fn [e] (if-not (.getValueIsAdjusting e)
+                    (if (.isSelectionEmpty list-selection-model)
+                      (.setEnabled b-remove-redemption false)
+                      (.setEnabled b-remove-redemption true)))))))
+
 
     (defn read-fields
       []
@@ -201,46 +240,39 @@
     (defn calc-action [] (app/update-spec (domain/calc-spec (read-fields))))
     (defn clear-action [] (app/update-spec (domain/new-spec)))
 
-    (defn remove-redemptions-action
-      []
-      (print "Ought to remove rows with indices " (.getSelectedRows table) "."))
-
     ; watch input changes
     (add-watch app/state
                :spec-update
                (fn [_ _ old-state new-state]
                  (when-not
                   (= (:spec old-state) (:spec new-state))
-                   (println :spec-update)
                    (update-fields (:spec new-state)))))
     (add-watch app/state
                :spec-calc
                (fn [_ _ old-state new-state]
                  (when-not
                   (= (:spec old-state) (:spec new-state))
-                   (println :spec-calc)
                    (app/update-periods (domain/calc-periods-for-spec (:spec new-state))))))
     (add-watch app/state
                :redemptions-update
                (fn [_ _ old-state new-state]
                  (when-not
                   (= (:redemptions old-state) (:redemptions new-state))
-                   (println :redemptions-update)
+                   (.setEnabled b-clear-redemption (not= 0 (count (:redemptions new-state))))
                    (.fireTableDataChanged table-model))))
     (add-watch app/state
                :redemptions-spec-calc
                (fn [_ _ old-state new-state]
                  (when-not
                   (= (:redemptions old-state) (:redemptions new-state))
-                   (println :redemptions-spec-calc)
                    (app/update-periods (domain/calc-periods-for-spec (read-fields))))))
 
     (sevt/add-action-listener b-calc
-                               (swing/action (fn [_]
-                                               (calc-action))))
+                              (swing/action (fn [_]
+                                              (calc-action))))
     (sevt/add-action-listener b-clear
-                               (swing/action (fn [_]
-                                               (clear-action))))
+                              (swing/action (fn [_]
+                                              (clear-action))))
 
     (swing/panel {:layout (swing/mig-layout {:layoutConstraints "insets 10, wrap 2, fill"
                                              :columnConstraints "[left|grow]"})}
