@@ -11,7 +11,8 @@
 ;;;;
 
 (ns org.soulspace.annuity.application.annuity
-  (:require [clojure.java.io :as io]
+  (:require [clojure.edn]
+            [clojure.java.io :as io]
             [org.soulspace.clj.java.text :as text]
             [org.soulspace.clj.java.i18n :as i18n]
             [org.soulspace.cmp.svg.graphics2d :as g2d]
@@ -26,28 +27,14 @@
 (def state (atom {:spec (domain/new-spec)
                   :redemptions []
                   :periods []}))
-(comment
-  (def spec (ref (domain/new-spec)))
-  (def redemptions (ref []))
-  (def periods (ref []))
-
-  (defn update-spec [s]
-    (dosync
-     (ref-set spec s)
-     (ref-set redemptions (:extra-redemptions @spec))))
-
-  (defn update-periods
-    [p]
-    (dosync (ref-set periods p)))
-  )
 
 (defn update-spec
-  ""
+  "Update credit specification in application state."
   [s]
   (swap! state assoc :spec s :redemptions (:extra-redemptions s)))
 
 (defn update-periods
-  ""
+  "Update credit redemption periods in application state."
   [p]
   (swap! state assoc :periods p))
 
