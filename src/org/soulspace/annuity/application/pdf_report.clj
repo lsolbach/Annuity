@@ -14,6 +14,7 @@
   (:require [clojure.data.xml :as xml]
             [clojure.java.io :as io]
             [org.soulspace.xml.dsl.fo-dsl :as fo]
+            [org.soulspace.xml.dsl.svg-dsl :as svg]
             [org.soulspace.xml.util :as xutil]
             [org.soulspace.cmp.fop :as fop]
             [org.soulspace.annuity.domain.annuity :as domain]
@@ -92,19 +93,26 @@
       {}
       (map rp-period periods))))
 
-;(def svgx "<svg:svg height='200' width='300' xmlns:svg='http://www.w3.org/2000/svg'><svg:g><svg:circle cx='120' cy='90' style='fill: gray' r='80'></svg:circle><svg:circle cx='20' cy='90' style='fill: gray' r='10'></svg:circle><svg:circle cx='220' cy='90' style='fill: gray' r='10'></svg:circle><svg:text style='fill: white; stroke: black; font-family: sans-serif; font-size: 25; font-weight: bold' x='65' y='75'>Scalable</svg:text><svg:text style='fill: white; stroke: black; font-family: sans-serif; font-size: 25; font-weight: bold' x='75' y='100'>Vector</svg:text><svg:text style='fill: white; stroke: black; font-family: sans-serif; font-size: 25; font-weight: bold' x='60' y='125'>Graphics</svg:text></svg:g></svg:svg>")
-(def svgx "<svg:svg height='200' width='300' xmlns:svg='http://www.w3.org/2000/svg'><svg:g><svg:circle cx='120' cy='90' style='fill: gray' r='80'></svg:circle></svg:g></svg:svg>")
+(def svgx (xml/parse-str
+           "<svg:svg width='300' height='200' xmlns:svg='http://www.w3.org/2000/svg'>
+              <svg:g>
+                <svg:circle cx='120' cy='90' style='fill: gray' r='80'></svg:circle>
+              </svg:g>
+            </svg:svg>"))
+
+(def svgc (svg/svg {:width 300 :height 200}
+                   (svg/g {}
+                          (svg/circle {:cx 120 :cy 90 :r 80 :style "fill: gray"}))))
 
 (defn rp-redemption-interest-chart
   []
   (let [;svg1 (parse-str (chart-svg-string (get-redemption-interest-chart) 1280 960))
-        svg1 (xml/parse-str svgx)
-        ifo1 (fo/block {} (fo/instream-foreign-object {} svg1))]
-    ;  (println (chart-svg-string (get-redemption-interest-chart) 1280 960))
-    ;  (println (parse-str (chart-svg-string (get-redemption-interest-chart) 1280 960)))
+        ;svg1 (xml/parse-str svgx)
+        ifo1 (fo/block {} (fo/instream-foreign-object {} svgc))]
     (println ifo1)
     (println "Generate IFO" (xml/emit-str ifo1))
-    (fo/block {:content-width "300px" :content-height "200px"} (fo/instream-foreign-object {} svg1))))
+    (fo/block {:content-width "300px" :content-height "200px"}
+              (fo/instream-foreign-object {} svgc))))
 
 (defn cumulated-chart-svg
   []
@@ -142,6 +150,7 @@
   [state]
   (let [fo-report (rp-report state)
         fop-factory (fop/new-fop-factory "fop.xconf")]
-    (println "Generate Report" (xml/emit-str fo-report))
+;    (println "Generate Report")
+;    (println  (xml/emit-str fo-report))
     (fop/fo-to-pdf fop-factory (xutil/string-input-source (xml/emit-str fo-report)) (io/as-file "report.pdf"))
     (println "Saved report")))
