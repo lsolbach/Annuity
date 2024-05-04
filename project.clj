@@ -11,13 +11,13 @@
                  [org.soulspace.clj/cmp.batik "0.2.1"]
                  [org.soulspace.clj/cmp.fop "0.3.1"]
                  [org.soulspace.clj/cmp.jfreechart "0.5.0"]
-                 [org.soulspace.clj/cmp.poi "0.6.1"]
+                 [org.soulspace.clj/cmp.poi "0.6.4"]
                  [org.soulspace.clj/math.financial "0.7.0"]
                  [org.soulspace.clj/xml.core "0.5.1"]
                  [org.soulspace.clj/xml.dsl "0.5.2"]]
 
   :test-paths ["test"]
-  :repl-options {:init-ns org.soulspace.overarch.adapter.ui.cli}
+  :repl-options {:init-ns org.soulspace.annuity.application}
 
   
   :profiles {:dev {:dependencies [[djblue/portal "0.49.1"]
