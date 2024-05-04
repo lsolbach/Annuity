@@ -11,9 +11,17 @@
   :lein-tools-deps/config {:config-files [:install :user :project]}
 
   :test-paths ["test"]
-  :profiles {:dev {:dependencies [[djblue/portal "0.37.1"]
-                                  [criterium "0.4.6"]]
+  :repl-options {:init-ns org.soulspace.overarch.adapter.ui.cli}
+
+  
+  :profiles {:dev {:dependencies [[djblue/portal "0.49.1"]
+                                  [criterium/criterium "0.4.6"]
+                                  [com.clojure-goes-fast/clj-java-decompiler "0.3.4"]
+                                    ; [expound/expound "0.9.0"]
+                                  ]
                    :global-vars {*warn-on-reflection* true}}}
+
+
 
 ;  :profiles {:uberjar {:aot [org.soulspace.annuity.application]}}
   )

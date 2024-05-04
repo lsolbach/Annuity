@@ -96,7 +96,6 @@
 ;;;
 ;;; Dialogs
 ;;;
-
 (let [field-period (swing/integer-field {:columns 10})
       field-amount (swing/formatted-text-field app/money-fmt {:columns 10 :value 0.0})
       button-ok (swing/button {:text (app/i18n "button.ok")})
