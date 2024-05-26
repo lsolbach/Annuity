@@ -11,7 +11,7 @@
 ;;;;
 
 (ns org.soulspace.annuity.domain.annuity
-  (:require [org.soulspace.math.core :as m]
+  (:require [clojure.math :as m]
             [org.soulspace.math.interest :as mi]))
 
 ;;;;
