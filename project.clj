@@ -14,7 +14,7 @@
                  [org.soulspace.clj/cmp.jfreechart "0.5.0"]
                  [org.soulspace.clj/math.financial "0.8.0"]
                  [org.soulspace.clj/xml.core "0.5.1"]
-                 [org.soulspace.clj/xml.dsl "0.5.2"]]
+                 [org.soulspace.clj/xml.dsl "0.5.4"]]
 
   :test-paths ["test"]
 
