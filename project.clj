@@ -9,7 +9,7 @@
                  [org.clojure/data.csv "1.1.0"]
                  [org.soulspace.clj/clj.swing "0.8.4"]
                  [org.soulspace.clj/cmp.poi "0.6.5"]
-                 [org.soulspace.clj/cmp.fop "0.3.3"]
+                 [org.soulspace.clj/cmp.fop "0.3.4"]
                  [org.soulspace.clj/cmp.batik "0.2.2"]
                  [org.soulspace.clj/cmp.jfreechart "0.5.0"]
                  [org.soulspace.clj/math.financial "0.8.0"]
@@ -17,8 +17,6 @@
                  [org.soulspace.clj/xml.dsl "0.5.4"]]
 
   :test-paths ["test"]
-
   :repl-options {:init-ns org.soulspace.annuity.application}
-
   :profiles {:uberjar {:aot [org.soulspace.annuity.application]}}
   )

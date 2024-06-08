@@ -21,7 +21,6 @@
 ;;
 ;; Domain Data
 ;;
-
 (defrecord AnnuitySpec [credit p-interest rate p-redemption term payment-period extra-redemptions])
 (defrecord AnnuityPeriod [period year amount rate interest redemption c-interest c-cost])
 (defrecord ExtraRedemption [period amount])
